@@ -1,22 +1,24 @@
-from telebot import TeleBot
+from telebot import TeleBot, logger as telelogger
 from telebot.types import Message, CallbackQuery, InlineQuery
 from storage import UserStorage
 from settings import TELEGRAM_BOT_TOKEN, MAX_PASS_COUNT, MAX_PASS_LEN
 from keyboards import settings_keyboard
 from generator import generate_password
 from html import escape
+import logging
 import inline
 import messages
 
 
 # TODO: В докере сделать db.json вне контейнера
-# TODO: Логи действий, чтобы понимать что бот жив вообще
 # TODO: Генерация паролей из своего словаря
 # TODO: multilang, acho
 # TODO: Генерация паролей из словаря
 # TODO: Readme на английском и русском
 
 bot = TeleBot(TELEGRAM_BOT_TOKEN)
+logger = telelogger
+telelogger.setLevel(logging.INFO)
 storj = UserStorage()
 
 
@@ -36,7 +38,14 @@ def edit_settings_message(chat_id: int, message_id: int) -> None:
     )
 
 
-def check_for_generate_nothing(user_data: dict):
+def check_for_generate_nothing(user_data: dict) -> bool:
+    """
+    Check settings for options, if all bool options is false return True.
+    This check is necessary, at least one list should exist for password generation
+
+    :param user_data:
+    :return:
+    """
     if not any([user_data["allow_lowercase"],
                 user_data["allow_uppercase"],
                 user_data["allow_numbers"],
@@ -44,7 +53,13 @@ def check_for_generate_nothing(user_data: dict):
         return True
 
 
-def invert_setting(field, query):
+def invert_setting(field: str, query: CallbackQuery) -> None:
+    """
+    Invert setting in database by field and edit message provided by query
+    :param field: Field in database to invert
+    :param query: Callback query
+    :return:
+    """
     user_id = query.message.chat.id
     filled_field = storj.get_or_create(user_id)[field]
     storj.update(field, not filled_field, user_id)
@@ -54,18 +69,23 @@ def invert_setting(field, query):
 # Commands
 @bot.message_handler(commands=['start'])
 def send_welcome(message: Message) -> None:
+    chat_id = message.chat.id
+    logger.info(f"Send welcome to {chat_id}")
     bot.reply_to(message, messages.start)
     storj.get_or_create(message.chat.id)
 
 
 @bot.message_handler(commands=['settings'])
 def settings(message: Message) -> None:
-    send_settings_message(message.chat.id)
+    chat_id = message.chat.id
+    logger.info(f"Send settings to {chat_id}")
+    send_settings_message(chat_id)
 
 
 @bot.message_handler(commands=['generate'])
 def generate(message: Message) -> None:
     chat_id = message.chat.id
+    logger.info(f"Generate password for {chat_id}")
     user_data = storj.get_or_create(chat_id)
     if check_for_generate_nothing(user_data):
         return bot.send_message(chat_id, messages.nothing_to_generate)
@@ -84,6 +104,15 @@ def generate(message: Message) -> None:
 
 
 def pass_count_and_len_step(message: Message, options: dict) -> None:
+    """
+    Step handler for write new values of pass_count and pass_len to database
+    This function check value for is_digit, max_val is bigger then val, val less then 0 and update val to database
+    After all, bot reply a success_message and send settings message
+
+    :param message: Message obj
+    :param options: dict with max_val, db_field and success_message
+    :return:
+    """
     chat_id = message.chat.id
     val = message.text
     if not str.isdigit(val):
@@ -107,6 +136,7 @@ def pass_count_and_len_step(message: Message, options: dict) -> None:
 
 @bot.callback_query_handler(lambda query: query.data in ["nums", "lowercase", "uppercase", "spec_chars"])
 def invert_bool_settings(query: CallbackQuery) -> None:
+    logger.info(f"{query.from_user.id} invert settings...")
     if query.data == "nums":
         invert_setting("allow_numbers", query)
     if query.data == "lowercase":
@@ -120,6 +150,7 @@ def invert_bool_settings(query: CallbackQuery) -> None:
 @bot.callback_query_handler(lambda query: query.data in ["pass_count", "pass_len"])
 def pass_count_and_len_callback(query: CallbackQuery) -> None:
     chat_id = query.message.chat.id
+    logger.info(f"{query.from_user.id} setting {query.data}")
     if query.data == "pass_count":
         bot.send_message(chat_id, messages.pass_count_question)
         bot.register_next_step_handler_by_chat_id(
@@ -143,6 +174,7 @@ def pass_count_and_len_callback(query: CallbackQuery) -> None:
 @bot.inline_handler(lambda q: q.query.isdigit() and 0 < int(q.query) < 64)
 def inline_handler(query: InlineQuery):
     try:
+        logger.info(f"Sending inline to {query.from_user.id}")
         length = int(query.query)
         only_numbers = inline.only_numbers(length)
         only_str = inline.only_str(length)
@@ -151,8 +183,8 @@ def inline_handler(query: InlineQuery):
         bot.answer_inline_query(query.id, [
             only_numbers, only_str, str_and_numbers, str_nums_and_spec
         ], cache_time=0)
-    except:
-        pass
+    except Exception as e:
+        logger.error(f"Exception occurred in inline handler: {e}")
 
 
 bot.infinity_polling()
