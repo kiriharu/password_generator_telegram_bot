@@ -1,10 +1,10 @@
 import string
 import secrets
 
-lowercase = [letters for letters in string.ascii_lowercase]
-uppercase = [letters for letters in string.ascii_uppercase]
-nums = [n for n in range(0, 10)]
-spec_chars = "!#$%&'()*+,-./:;<=>?@[]^_`{|}~"
+lowercase = string.ascii_lowercase
+uppercase = string.ascii_uppercase
+nums = string.digits
+spec_chars = string.punctuation
 
 
 def generate_password(length: int, add_lowercase: bool = False, add_uppercase: bool = False,
