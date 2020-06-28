@@ -3,18 +3,19 @@ from telebot.types import Message, CallbackQuery, InlineQuery
 from storage import UserStorage
 from settings import TELEGRAM_BOT_TOKEN, MAX_PASS_COUNT, MAX_PASS_LEN
 from keyboards import settings_keyboard
-from generator import generate_password
+from generator import generate_password, generate_only_numbers, generate_only_str, generate_str_and_numbers, \
+    generate_str_nums_and_spec
 from html import escape
+from typing import Callable
 import logging
 import inline
 import messages
 
 
 # TODO: В докере сделать db.json вне контейнера
-# TODO: Генерация паролей из своего словаря
 # TODO: multilang, acho
-# TODO: Генерация паролей из словаря
 # TODO: Readme на английском и русском
+
 
 bot = TeleBot(TELEGRAM_BOT_TOKEN)
 logger = telelogger
@@ -66,39 +67,21 @@ def invert_setting(field: str, query: CallbackQuery) -> None:
     edit_settings_message(user_id, query.message.message_id)
 
 
-# Commands
-@bot.message_handler(commands=['start'])
-def send_welcome(message: Message) -> None:
+def generate_from_preset(message: Message, generator: Callable, pass_length: int = None) -> None:
+    """Generate password from preset and send to user"""
     chat_id = message.chat.id
-    logger.info(f"Send welcome to {chat_id}")
-    bot.reply_to(message, messages.start)
-    storj.get_or_create(message.chat.id)
-
-
-@bot.message_handler(commands=['settings'])
-def settings(message: Message) -> None:
-    chat_id = message.chat.id
-    logger.info(f"Send settings to {chat_id}")
-    send_settings_message(chat_id)
-
-
-@bot.message_handler(commands=['generate'])
-def generate(message: Message) -> None:
-    chat_id = message.chat.id
-    logger.info(f"Generate password for {chat_id}")
-    user_data = storj.get_or_create(chat_id)
-    if check_for_generate_nothing(user_data):
-        return bot.send_message(chat_id, messages.nothing_to_generate)
-    passwords = [escape(generate_password(
-        length=int(user_data["pass_len"]),
-        add_lowercase=user_data["allow_lowercase"],
-        add_uppercase=user_data["allow_uppercase"],
-        add_nums=user_data["allow_numbers"],
-        add_spec=user_data["allow_spec"]
-    )) for _ in range(0, user_data["pass_count"])]
-    passwords = list(map(lambda password: f"<code>{password}</code>", passwords))
-    bot.send_message(chat_id, '\n'.join(passwords), parse_mode="html")
-
+    if pass_length:
+        length = pass_length
+    else:
+        length = MAX_PASS_LEN
+    msg = message.text.split(" ")
+    if len(msg) > 1:
+        if str.isdigit(msg[1]):
+            # Set length from message
+            length = int(msg[1])
+        else:
+            return bot.send_message(chat_id, "Недопустимый ввод, введите длинну пароля")
+    bot.send_message(chat_id, generator(length))
 
 # Next step handler
 
@@ -129,6 +112,75 @@ def pass_count_and_len_step(message: Message, options: dict) -> None:
 
     # Sending settings keyboard...
     send_settings_message(chat_id)
+
+
+# Commands
+@bot.message_handler(commands=['start'])
+def send_welcome(message: Message) -> None:
+    chat_id = message.chat.id
+    logger.info(f"Send welcome to {chat_id}")
+    bot.reply_to(message, messages.start)
+    storj.get_or_create(message.chat.id)
+
+
+@bot.message_handler(commands=['settings'])
+def settings(message: Message) -> None:
+    chat_id = message.chat.id
+    logger.info(f"Send settings to {chat_id}")
+    send_settings_message(chat_id)
+
+
+@bot.message_handler(commands=['only_numbers'])
+def command_gen_only_numbers(message: Message) -> None:
+    generate_from_preset(message, generate_only_numbers)
+
+
+@bot.message_handler(commands=['only_str'])
+def command_gen_only_str(message: Message) -> None:
+    generate_from_preset(message, generate_only_str)
+
+
+@bot.message_handler(commands=['str_and_numbers'])
+def command_gen_str_and_numbers(message: Message) -> None:
+    generate_from_preset(message, generate_str_and_numbers)
+
+
+@bot.message_handler(commands=['str_nums_and_spec'])
+def command_gen_str_nums_and_spec(message: Message) -> None:
+    generate_from_preset(message, generate_str_nums_and_spec)
+
+
+@bot.message_handler(commands=['weak'])
+def command_gen_weak(message: Message) -> None:
+    generate_from_preset(message, generate_only_str, 8)
+
+
+@bot.message_handler(commands=['medium'])
+def command_gen_medium(message: Message) -> None:
+    generate_from_preset(message, generate_str_and_numbers, 10)
+
+
+@bot.message_handler(commands=['strong'])
+def command_gen_strong(message: Message) -> None:
+    generate_from_preset(message, generate_str_nums_and_spec, 14)
+
+
+@bot.message_handler(commands=['generate'])
+def generate(message: Message) -> None:
+    chat_id = message.chat.id
+    logger.info(f"Generate password for {chat_id}")
+    user_data = storj.get_or_create(chat_id)
+    if check_for_generate_nothing(user_data):
+        return bot.send_message(chat_id, messages.nothing_to_generate)
+    passwords = [escape(generate_password(
+        length=int(user_data["pass_len"]),
+        add_lowercase=user_data["allow_lowercase"],
+        add_uppercase=user_data["allow_uppercase"],
+        add_nums=user_data["allow_numbers"],
+        add_spec=user_data["allow_spec"]
+    )) for _ in range(0, user_data["pass_count"])]
+    passwords = list(map(lambda password: f"<code>{password}</code>", passwords))
+    bot.send_message(chat_id, '\n'.join(passwords), parse_mode="html")
 
 
 # Callback handlers
