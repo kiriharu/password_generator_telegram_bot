@@ -38,8 +38,3 @@ class UserStorage:
         else:
             doc_id = self.create(user_id)
             return self.users.get(doc_id=doc_id)
-
-
-if __name__ == "__main__":
-    s = UserStorage()
-    print(s.get_or_create(1))
