@@ -1,4 +1,5 @@
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
+from tools import get_translated_message
 
 
 def bool_to_emoji(arg: bool) -> str:
@@ -7,14 +8,14 @@ def bool_to_emoji(arg: bool) -> str:
     return "❌"
 
 
-def settings_keyboard(user_data: dict) -> InlineKeyboardMarkup:
+def settings_keyboard(user_data: dict, lang_code: str) -> InlineKeyboardMarkup:
     buttons = InlineKeyboardMarkup()
     buttons.add(
         InlineKeyboardButton(
             bool_to_emoji(user_data['allow_numbers']), callback_data="nums"
         ),
         InlineKeyboardButton(
-            f"Цифры", callback_data="nums"
+            get_translated_message('keyboard_nums', lang_code=lang_code), callback_data="nums"
         )
     )
     buttons.add(
@@ -22,7 +23,7 @@ def settings_keyboard(user_data: dict) -> InlineKeyboardMarkup:
             bool_to_emoji(user_data['allow_lowercase']), callback_data="lowercase"
         ),
         InlineKeyboardButton(
-            f"Прописные буквы", callback_data="lowercase"
+            get_translated_message('keyboard_lowercase', lang_code=lang_code), callback_data="lowercase"
         )
     )
     buttons.add(
@@ -30,7 +31,7 @@ def settings_keyboard(user_data: dict) -> InlineKeyboardMarkup:
             bool_to_emoji(user_data['allow_uppercase']), callback_data="uppercase"
         ),
         InlineKeyboardButton(
-            f"Строчные буквы", callback_data="uppercase"
+            get_translated_message('keyboard_uppercase', lang_code=lang_code), callback_data="uppercase"
         )
     )
     buttons.add(
@@ -38,12 +39,12 @@ def settings_keyboard(user_data: dict) -> InlineKeyboardMarkup:
             bool_to_emoji(user_data['allow_spec']), callback_data="spec_chars"
         ),
         InlineKeyboardButton(
-            f"Спец. символы", callback_data="spec_chars"
+            get_translated_message('keyboard_spec_chars', lang_code=lang_code), callback_data="spec_chars"
         )
     )
     buttons.add(
         InlineKeyboardButton(
-            f"Количество паролей", callback_data="pass_count"
+            get_translated_message('keyboard_pass_count', lang_code=lang_code), callback_data="pass_count"
         ),
         InlineKeyboardButton(
             user_data['pass_count'], callback_data="pass_count"
@@ -51,7 +52,7 @@ def settings_keyboard(user_data: dict) -> InlineKeyboardMarkup:
     )
     buttons.add(
         InlineKeyboardButton(
-            f"Длина паролей: ", callback_data="pass_len"
+            get_translated_message('keyboard_pass_len', lang_code=lang_code), callback_data="pass_len"
         ),
         InlineKeyboardButton(
             user_data['pass_len'], callback_data="pass_len"

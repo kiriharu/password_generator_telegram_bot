@@ -6,14 +6,12 @@ from keyboards import settings_keyboard
 from generator import generate_password, generate_only_numbers, generate_only_str, generate_str_and_numbers, \
     generate_str_nums_and_spec
 from html import escape
+from tools import get_translated_message
 from typing import Callable
 import logging
 import inline
-import messages
-
 
 # TODO: В докере сделать db.json вне контейнера
-# TODO: multilang, acho
 # TODO: Readme на английском и русском
 
 
@@ -23,19 +21,20 @@ telelogger.setLevel(logging.INFO)
 storj = UserStorage()
 
 
-def send_settings_message(chat_id: int) -> None:
+def send_settings_message(message: Message) -> None:
+    chat_id = message.from_user.id
     bot.send_message(
         chat_id,
-        messages.settings_message,
-        reply_markup=settings_keyboard(storj.get_or_create(chat_id))
+        get_translated_message('settings_message', message),
+        reply_markup=settings_keyboard(storj.get_or_create(chat_id), message.from_user.language_code)
     )
 
 
-def edit_settings_message(chat_id: int, message_id: int) -> None:
+def edit_settings_message(chat_id: int, message_id: int, lang_code: str) -> None:
     bot.edit_message_text(
-        messages.settings_message,
+        get_translated_message('settings_message', lang_code=lang_code),
         chat_id, message_id,
-        reply_markup=settings_keyboard(storj.get_or_create(chat_id))
+        reply_markup=settings_keyboard(storj.get_or_create(chat_id), lang_code)
     )
 
 
@@ -64,12 +63,11 @@ def invert_setting(field: str, query: CallbackQuery) -> None:
     user_id = query.message.chat.id
     filled_field = storj.get_or_create(user_id)[field]
     storj.update(field, not filled_field, user_id)
-    edit_settings_message(user_id, query.message.message_id)
+    edit_settings_message(user_id, query.message.message_id, query.from_user.language_code)
 
 
 def generate_from_preset(message: Message, generator: Callable, pass_length: int = None) -> None:
     """Generate password from preset and send to user"""
-    chat_id = message.chat.id
     if pass_length:
         length = pass_length
     else:
@@ -80,8 +78,9 @@ def generate_from_preset(message: Message, generator: Callable, pass_length: int
             # Set length from message
             length = int(msg[1])
         else:
-            return bot.send_message(chat_id, "Недопустимый ввод, введите длинну пароля")
-    bot.send_message(chat_id, generator(length))
+            return bot.reply_to(message, get_translated_message('need_int', message))
+    bot.reply_to(message, f"<code>{escape(generator(length))}</code>", parse_mode="html")
+
 
 # Next step handler
 
@@ -99,35 +98,34 @@ def pass_count_and_len_step(message: Message, options: dict) -> None:
     chat_id = message.chat.id
     val = message.text
     if not str.isdigit(val):
-        return bot.reply_to(message, messages.need_int)
+        return bot.reply_to(message, get_translated_message('need_int', message))
     # Converting to int after checking
     val = int(val)
     if val > options["max_val"]:
-        return bot.reply_to(message, messages.int_to_big.format(options["max_val"]))
+        return bot.reply_to(message, get_translated_message('int_too_big', message))
     if val <= 0:
-        return bot.reply_to(message, messages.int_to_small)
+        return bot.reply_to(message, get_translated_message('int_too_small', message))
 
     storj.update(options["db_field"], val, chat_id)
     bot.reply_to(message, options["success_message"].format(val))
 
     # Sending settings keyboard...
-    send_settings_message(chat_id)
+    send_settings_message(message)
 
 
 # Commands
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['start', 'help'])
 def send_welcome(message: Message) -> None:
-    chat_id = message.chat.id
+    chat_id = message.from_user.id
     logger.info(f"Send welcome to {chat_id}")
-    bot.reply_to(message, messages.start)
-    storj.get_or_create(message.chat.id)
+    bot.reply_to(message, get_translated_message('start', message))
+    storj.get_or_create(chat_id)
 
 
 @bot.message_handler(commands=['settings'])
 def settings(message: Message) -> None:
-    chat_id = message.chat.id
-    logger.info(f"Send settings to {chat_id}")
-    send_settings_message(chat_id)
+    logger.info(f"Send settings to {message.from_user.id}")
+    send_settings_message(message)
 
 
 @bot.message_handler(commands=['only_numbers'])
@@ -171,7 +169,7 @@ def generate(message: Message) -> None:
     logger.info(f"Generate password for {chat_id}")
     user_data = storj.get_or_create(chat_id)
     if check_for_generate_nothing(user_data):
-        return bot.send_message(chat_id, messages.nothing_to_generate)
+        return bot.send_message(chat_id, get_translated_message('nothing_to_generate', message))
     passwords = [escape(generate_password(
         length=int(user_data["pass_len"]),
         add_lowercase=user_data["allow_lowercase"],
@@ -202,23 +200,24 @@ def invert_bool_settings(query: CallbackQuery) -> None:
 @bot.callback_query_handler(lambda query: query.data in ["pass_count", "pass_len"])
 def pass_count_and_len_callback(query: CallbackQuery) -> None:
     chat_id = query.message.chat.id
+    lang = query.from_user.language_code
     logger.info(f"{query.from_user.id} setting {query.data}")
     if query.data == "pass_count":
-        bot.send_message(chat_id, messages.pass_count_question)
+        bot.send_message(chat_id, get_translated_message('pass_count_question', lang_code=lang))
         bot.register_next_step_handler_by_chat_id(
             chat_id, pass_count_and_len_step, dict(
                 max_val=MAX_PASS_COUNT,
                 db_field="pass_count",
-                success_message=messages.pass_count_setted
+                success_message=get_translated_message('pass_count_setted', lang_code=lang)
             )
         )
     if query.data == "pass_len":
-        bot.send_message(chat_id, messages.pass_generation_question)
+        bot.send_message(chat_id, get_translated_message('pass_len_generation_question', lang_code=lang))
         bot.register_next_step_handler_by_chat_id(
             chat_id, pass_count_and_len_step, dict(
                 max_val=MAX_PASS_LEN,
                 db_field="pass_len",
-                success_message=messages.pass_len_setted
+                success_message=get_translated_message('pass_len_setted', lang_code=lang)
             )
         )
 
