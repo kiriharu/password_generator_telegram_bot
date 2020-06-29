@@ -1,8 +1,3 @@
-inline_only_int = "Только цифры"
-inline_only_str = "Только строчные и прописные буквы"
-inline_str_and_numbers = "Строчные и прописные буквы с цифрами"
-inline_str_nums_and_specs = "Строчные и прописные буквы, цифры, спецсимволы"
-
 msg = dict(
     ru=dict(
         start="""Тут короче сообщение о том, как все у нас хорошо и какой у нас классный генератор паролей!
@@ -24,7 +19,12 @@ msg = dict(
         keyboard_uppercase="Строчные буквы",
         keyboard_spec_chars="Спец. символы",
         keyboard_pass_count="Количество паролей",
-        keyboard_pass_len="Длина паролей"
+        keyboard_pass_len="Длина паролей",
+
+        inline_only_int="Только цифры",
+        inline_only_str="Только строчные и прописные буквы",
+        inline_str_and_numbers="Строчные и прописные буквы с цифрами",
+        inline_str_nums_and_specs="Строчные и прописные буквы, цифры, спецсимволы",
     ),
     en=dict(
         start="""Simple eng message""",
@@ -38,11 +38,17 @@ msg = dict(
         settings_message="Your settings right now:",
         nothing_to_generate="""You set all checkmarks to no!
 Go back to /settings and set at least one checkmark option.""",
+
         keyboard_nums="Numbers",
         keyboard_lowercase="Lowercase",
         keyboard_uppercase="Uppercase",
         keyboard_spec_chars="Special chars",
         keyboard_pass_count="Passwords count",
-        keyboard_pass_len="Password length"
+        keyboard_pass_len="Password length",
+
+        inline_only_int="Only numbers",
+        inline_only_str="Only lowercase and uppercase chars",
+        inline_str_and_numbers="Lowercase, uppercase chars and numbers",
+        inline_str_nums_and_specs="Lowercase and uppercase chars, numbers and spec. chars",
     )
 )

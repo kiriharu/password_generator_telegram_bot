@@ -222,15 +222,16 @@ def pass_count_and_len_callback(query: CallbackQuery) -> None:
         )
 
 
-@bot.inline_handler(lambda q: q.query.isdigit() and 0 < int(q.query) < 64)
+@bot.inline_handler(lambda q: q.query.isdigit() and 0 < int(q.query) < MAX_PASS_LEN)
 def inline_handler(query: InlineQuery):
     try:
+        lang_code = query.from_user.language_code
         logger.info(f"Sending inline to {query.from_user.id}")
         length = int(query.query)
-        only_numbers = inline.only_numbers(length)
-        only_str = inline.only_str(length)
-        str_and_numbers = inline.str_and_numbers(length)
-        str_nums_and_spec = inline.str_nums_and_spec(length)
+        only_numbers = inline.only_numbers(length, lang_code)
+        only_str = inline.only_str(length, lang_code)
+        str_and_numbers = inline.str_and_numbers(length, lang_code)
+        str_nums_and_spec = inline.str_nums_and_spec(length, lang_code)
         bot.answer_inline_query(query.id, [
             only_numbers, only_str, str_and_numbers, str_nums_and_spec
         ], cache_time=0)
