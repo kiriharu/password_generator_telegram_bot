@@ -19,11 +19,11 @@ MAX_PASS_LEN = 64
 MAX_PASS_COUNT = 16
 
 only_numbers_pic_url = "https://raw.githubusercontent.com/" \
-                       "kiriharu/password_generator_telegram_bot/master/only_numbers.png"
+                       "kiriharu/password_generator_telegram_bot/master/img/only_numbers.png"
 only_str_pic_url = "https://raw.githubusercontent.com/" \
-                   "kiriharu/password_generator_telegram_bot/master/only_str.png"
+                   "kiriharu/password_generator_telegram_bot/master/img/only_str.png"
 str_and_numbers_pic_url = "https://raw.githubusercontent.com/" \
-                          "kiriharu/password_generator_telegram_bot/master/str_and_numbers.png"
+                          "kiriharu/password_generator_telegram_bot/master/img/str_and_numbers.png"
 
 str_nums_and_spec_pic_url = "https://raw.githubusercontent.com/" \
                           "kiriharu/password_generator_telegram_bot/master/str_nums_and_spec.png"
