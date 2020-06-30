@@ -1,8 +1,17 @@
 msg = dict(
     ru=dict(
-        start="""Тут короче сообщение о том, как все у нас хорошо и какой у нас классный генератор паролей!
-Настройки в /settings
-Генерировать пароль через /generate""",
+        start="""Добро пожаловать в генератор паролей!
+Несколько команд, чтобы быстро разобраться что к чему:
+
+/help или /start покажет это сообщение.
+/settings позволит тебе настроить собственный пресет для создания паролей.
+/generate сгенерирует пароль из нужных тебе настроек.
+/weak /medium /strong сгенерируют тебе пароли (по названиям понятно какие)
+
+Также, в боте доступен inline-режим! Напиши в чате @passwgenbot длинна_пароля и ты сможешь сгенерировать нужный тебе пароль!
+Автор: @kiriharu
+Github: https://github.com/kiriharu/password_generator_telegram_bot
+        """,
         need_int="Неправильный ввод, вам нужно ввести число.",
         int_too_big="Слишком большое число. Необходимо указать число до {}",
         int_too_small="Слишком маленькое число, необходимо указать число больше ноля.",
@@ -27,7 +36,17 @@ msg = dict(
         inline_str_nums_and_specs="Строчные и прописные буквы, цифры, спецсимволы",
     ),
     en=dict(
-        start="""Simple eng message""",
+        start="""Welcome to the password generator!
+A few commands to quickly figure out what's what:
+
+/help or /start will show this message.
+/settings will let you configure your own preset to create passwords.
+/generate will generate a password from your settings.
+/weak /medium /strong will generate passwords for you (by name it is clear)
+
+Also, inline mode is available in the bot! Send message using @passwgenbot with the password length and you can generate the password!
+Author: @kiriharu
+Github: https://github.com/kiriharu/password_generator_telegram_bot""",
         need_int="Incorrect input, you need to enter a number.",
         int_too_big="Too many. You must enter a number up to {}",
         int_too_small="Too small. You must enter a number bigger than 0.",

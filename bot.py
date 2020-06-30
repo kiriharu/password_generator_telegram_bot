@@ -12,8 +12,6 @@ import logging
 import inline
 
 # TODO: В докере сделать db.json вне контейнера
-# TODO: Readme на английском и русском
-# TODO: Сделать нормальный хелп
 
 bot = TeleBot(TELEGRAM_BOT_TOKEN)
 logger = telelogger
