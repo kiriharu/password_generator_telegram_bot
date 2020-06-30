@@ -1,6 +1,7 @@
 # <p align="center"> Password generator bot for Telegram #
 
 [Read in russian](README_ru.md)
+
 This bot allows you to generate passwords directly from Telegram.
 This can be useful if you don't want open programs for managing or generating passwords.
 
