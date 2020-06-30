@@ -13,7 +13,7 @@ import inline
 
 # TODO: В докере сделать db.json вне контейнера
 # TODO: Readme на английском и русском
-
+# TODO: Сделать нормальный хелп
 
 bot = TeleBot(TELEGRAM_BOT_TOKEN)
 logger = telelogger
@@ -79,6 +79,8 @@ def generate_from_preset(message: Message, generator: Callable, pass_length: int
             length = int(msg[1])
         else:
             return bot.reply_to(message, get_translated_message('need_int', message))
+    if length > MAX_PASS_LEN:
+        return bot.reply_to(message, get_translated_message('int_too_big', message).format(MAX_PASS_LEN))
     bot.reply_to(message, f"<code>{escape(generator(length))}</code>", parse_mode="html")
 
 
@@ -102,7 +104,7 @@ def pass_count_and_len_step(message: Message, options: dict) -> None:
     # Converting to int after checking
     val = int(val)
     if val > options["max_val"]:
-        return bot.reply_to(message, get_translated_message('int_too_big', message))
+        return bot.reply_to(message, get_translated_message('int_too_big', message).format(options["max_val"]))
     if val <= 0:
         return bot.reply_to(message, get_translated_message('int_too_small', message))
 
